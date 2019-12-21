@@ -1,51 +1,101 @@
 from flask import Flask
-from flask import render_template
+from flask import render_template, url_for, request, redirect
 import requests
 import json
 import spotipy
 from requests_oauthlib import OAuth1
 
+"""Import config variables."""
+from config import CLIENT_ID
+from config import AUTHORIZATION
+from config import REDIRECT_URI
 
 """Initialize the app."""
-app = Flask(__name__)
+app = Flask(__name__, instance_relative_config=True)
+app.config.from_object('config')
+app.config.from_pyfile('config.py')
 
-token = "BQC7c_UeAWvm4gP8NvyK0rOaCSXjQrvKrkKlFNfrYlEeChNzsZxhFYJiARAapCxAOYKfrqOMGIIAz5p_zWPq1n6xu25Y-6R0jjZhSMnfokOOBEQ5iE5GnioL4obthBbHoknq9Qn1QKl7oFyo'"
+
+"""Authorize the app."""
+authorize_url = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}"
+
 
 """Set artist list from label"""
-artist_list = ['Mamman Sani', 'Les Filles de Illighadad', 'Mdou Moctar', 'Luka Productions']
+artist_list = ['Led Zeppelin', 'Mamman Sani', 'Les Filles de Illighadad', 'Mdou Moctar', 'Luka Productions']
 
-
-for artist in artist_list:
-    url = f"https://api.spotify.com/v1/search?q={artist}&type=album"
-
-    payload = {}
-    headers = {
-      'Authorization': f'Bearer {token}'
-    }
-
-    response = requests.request("GET", url, headers=headers, data = payload)
-
-    result = response.json()
-
-    """Parse the result."""
-    for album in result['albums']['items']:
-        for item in album['artists']:
-            artist_id = item['id']
-        for item in album['images']:
-            if item['height'] == 300:
-                print(item['url'])
-
-    print(artist)
-    print(artist_id)
-
-
-
-# json.dumps((x), indent=4)
-@app.route("/")
+@app.route("/", methods=['GET', 'POST'])
 def index():
+    if request.method == "POST":
+        """Redirect to the authorization page."""
+        return redirect(authorize_url)
 
     return render_template('index.html')
 
-# """Conditional."""
-# if __name__ == '__main__':
-#     app.run(debug=True)
+@app.route("/callback", methods=['GET', 'POST'])
+def callback():
+    """Callback from Spotify redirected url."""
+
+    """Get code from URL."""
+    code = request.args.get('code')
+
+    """Initialize variables for token."""
+    grant_type = 'authorization_code'
+
+    """Make post request for token."""
+    headers = {
+                'Authorization': f'Basic {AUTHORIZATION}',
+              }
+
+    data = {
+            'grant_type': 'authorization_code',
+            'code': {code},
+            'redirect_uri': 'http://localhost:5000/callback'
+            }
+
+
+    r = requests.post('https://accounts.spotify.com/api/token', headers=headers, data=data)
+
+    response = r.json()
+
+    """Get access token."""
+    token = response['access_token']
+
+    return redirect(url_for('playlist', token=token))
+
+@app.route("/playlist", methods=['GET', 'POST'])
+def playlist():
+    """Playlist view of artists from label."""
+    token = request.args.get('token')
+
+
+    artist_data = {}
+
+    """Loop over artist in artist list and return json of albums."""
+    for artist in artist_list:
+        album_data = {}
+        url = f"https://api.spotify.com/v1/search?q={artist}&type=album"
+
+        headers = {
+                    'Authorization': f'Bearer {token}'
+                    }
+
+        response = requests.request("GET", url, headers=headers)
+
+        albums_by_artist = response.json()
+
+        """Parse the result."""
+        for album in albums_by_artist['albums']['items']:
+            images = []
+            for entry in album['artists']:
+                artist_id = entry['id']
+            album_name = album['name']
+            for entry in album['images']:
+                if entry['height'] == 300:
+                    album_data[album_name] = entry['url']
+        artist_data[artist] = album_data
+
+    return render_template('playlist.html', token=token, artist_data=artist_data)
+
+"""Conditional."""
+if __name__ == '__main__':
+    app.run(debug=True)

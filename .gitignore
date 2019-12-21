@@ -1,0 +1,5 @@
+# ignore instance directory
+instance/
+
+# ignore config file
+config.py
