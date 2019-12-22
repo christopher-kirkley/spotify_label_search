@@ -19,9 +19,8 @@ app.config.from_pyfile('config.py')
 """Authorize the app."""
 authorize_url = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}"
 
-
 """Set artist list from label"""
-artist_list = ['Led Zeppelin', 'Mamman Sani', 'Les Filles de Illighadad', 'Mdou Moctar', 'Luka Productions']
+artist_list = ['Mamman Sani', 'Les Filles de Illighadad', 'Mdou Moctar', 'Luka Productions', 'Abba Gargando']
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
@@ -66,7 +65,6 @@ def callback():
 def playlist():
     """Playlist view of artists from label."""
     token = request.args.get('token')
-
 
     artist_data = {}
 
