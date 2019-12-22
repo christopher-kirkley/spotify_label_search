@@ -19,8 +19,9 @@ app.config.from_pyfile('config.py')
 """Authorize the app."""
 authorize_url = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}"
 
-"""Set artist list from label"""
-artist_list = ['Mamman Sani', 'Les Filles de Illighadad', 'Mdou Moctar', 'Luka Productions', 'Abba Gargando']
+"""Set temporary catalog dict (this is already set up in discogs.py, just needs to be imported/refactored)"""
+catalog = {'Orchestre National de Mauritanie': ['Orchestre National de Mauritanie', 'Orchestre National de Mauritanie'], 'DJ Sandji': ['100% Balani Show'], 'Various': ['Guitar Is My Best Friend', 'Music From Saharan Cellphones Vol. 1', 'Music From Saharan Cellphones', 'Field Recordings From The Sahel', 'Music From Saharan Cellphones Volume 2', 'Music From Saharan Cellphones Vol. 2', 'Field Recordings From The Sahel', 'Uchronia – Field Recordings From Alternate Realities', 'Balani Show Super Hits - Electronic Street Parties From Mali', 'Gao Rap: Hip Hop From Northern Mali ', 'Agrim Agadez – Musique Guitare De La Republique Du Niger', 'Sahel Sounds Label Sampler'], 'Luka Productions': ['Falaw', 'Falaw', 'Fasokan', 'Mali Kady'], "Etran De L'Aïr": ['No. 1'], 'Mdou Moctar': ['Unreleased Recordings 2007-2013', 'Afelan', 'Anar', 'Afelan', 'Ilana: The Creator', 'Anar'], 'Mamman Sani Abdoulaye*': ['Unreleased Tapes 1981-1984'], 'Les Filles De Illighadad': ['Eghass Malan', 'Fatou Seidi Ghali & Alamnou Akrouni '], 'Tisdass': ['Yamedan'], "Azna De L'Ader": ['Zabaya'], 'Troupe Ecole Tudu': ['Oyiwane'], 'Abba Gargando': ['Abba Gargando'], 'Abdallah Ag Oumbadougou': ['Anou Malane', 'Anou Malane'], 'Mammane Sani*': ['La Musique Électronique Du Niger', 'La Musique Électronique Du Niger', 'La Musique Électronique Du Niger'], 'Supreme Talent Show': ['Danbe', 'Danbe'], 'Ahmoudou Madassane': ['Zerzura'], 'Mammane Sanni Abdoulaye': ['Mamman Sani Abdoulaye – Vol. No. 1'], 'Tallawit Timbouctou': ['Hali Diallo'], 'El Wali': ['Long Live The Sahrawi Army'], 'Les Filles de Illighadad': ['Fatou Seidi Ghali & Alamnou Akrouni'], 'Amanar': ['Alghafait'], 'Mdou Moctar / Brainstorm (33)': ['Anar / Vanessa'], "L'Orchestre National de Mauritanie*": ['La Mone / Kamlat'], "Afous D'Afous": ['Tarhanine Tegla'], 'Pheno S.': ['Kani']}
+
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
@@ -68,32 +69,62 @@ def playlist():
 
     artist_data = {}
 
-    """Loop over artist in artist list and return json of albums."""
-    for artist in artist_list:
-        album_data = {}
-        url = f"https://api.spotify.com/v1/search?q={artist}&type=album"
+    """Loop over catalog return json of albums."""
+    for artist, albums in catalog.items():
+        list = []
+        for album in albums:
+            """Set variables."""
+            url = f"https://api.spotify.com/v1/search?q=album:{album} artist:{artist}&type=album"
+            headers = {
+                        'Authorization': f'Bearer {token}'
+                        }
 
-        headers = {
-                    'Authorization': f'Bearer {token}'
-                    }
+            """Get response from API, transform to json."""
+            response = requests.request("GET", url, headers=headers)
+            albums_by_artist = response.json()
 
-        response = requests.request("GET", url, headers=headers)
+            album_data = {}
 
-        albums_by_artist = response.json()
 
-        """Parse the result."""
-        for album in albums_by_artist['albums']['items']:
-            images = []
-            for entry in album['artists']:
-                artist_id = entry['id']
-            album_name = album['name']
-            for entry in album['images']:
-                if entry['height'] == 300:
-                    album_data[album_name] = entry['url']
-        artist_data[artist] = album_data
+            """Parse the result."""
+            for albumjson in albums_by_artist['albums']['items']:
+                images = []
+                for entry in albumjson['artists']:
+                    artist_id = entry['id']
+                album_name = albumjson['name']
+                for entry in albumjson['images']:
+                    if entry['height'] == 300:
+                        album_data[album_name] = entry['url']
+                list.append(album_data)
+            artist_data[artist] = list
 
     return render_template('playlist.html', token=token, artist_data=artist_data)
 
 """Conditional."""
 if __name__ == '__main__':
     app.run(debug=True)
+
+#
+#    # """Loop over artist in artist list and return json of albums."""
+    # for artist in artist_list:
+    #     album_data = {}
+    #     url = f"https://api.spotify.com/v1/search?q={artist}&type=album"
+    #
+    #     headers = {
+    #                 'Authorization': f'Bearer {token}'
+    #                 }
+    #
+    #     response = requests.request("GET", url, headers=headers)
+    #
+    #     albums_by_artist = response.json()
+    #
+    #     """Parse the result."""
+    #     for album in albums_by_artist['albums']['items']:
+    #         images = []
+    #         for entry in album['artists']:
+    #             artist_id = entry['id']
+    #         album_name = album['name']
+    #         for entry in album['images']:
+    #             if entry['height'] == 300:
+    #                 album_data[album_name] = entry['url']
+    #     artist_data[artist] = album_data

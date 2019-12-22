@@ -2,17 +2,19 @@
 
 {% block content %}
 
-{% for artist, artist_info in artist_data.items() %}
+{% for artist, albums in artist_data.items() %}
 <div class="container">
 <h1>{{ artist }}</h1>
 <div class="container">
   <div class="row">
 
-    {% for album, image in artist_info.items() %}
-         <div class="col-sm">
-            <h5>{{ album }}</h5>
-            <img src="{{ image }}">
-          </div>
+    {% for album in albums %}
+      {% for album_name, image in album.items() %}
+             <div class="col-sm">
+                <h5>{{ album_name }}</h5>
+                <img src="{{ image }}">
+              </div>
+      {% endfor %}
     {% endfor %}
 
   </div>
