@@ -10,6 +10,10 @@ from config import CLIENT_ID
 from config import AUTHORIZATION
 from config import REDIRECT_URI
 
+"""Import musicbrainz"""
+from musicbrainz import label_search
+catalog = label_search('Warp Records')
+
 """Initialize the app."""
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_object('config')
@@ -18,9 +22,6 @@ app.config.from_pyfile('config.py')
 
 """Authorize the app."""
 authorize_url = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}"
-
-"""Set temporary catalog dict (this is already set up in discogs.py, just needs to be imported/refactored)"""
-catalog = {'Orchestre National de Mauritanie': ['Orchestre National de Mauritanie', 'Orchestre National de Mauritanie'], 'DJ Sandji': ['100% Balani Show'], 'Various': ['Guitar Is My Best Friend', 'Music From Saharan Cellphones Vol. 1', 'Music From Saharan Cellphones', 'Field Recordings From The Sahel', 'Music From Saharan Cellphones Volume 2', 'Music From Saharan Cellphones Vol. 2', 'Field Recordings From The Sahel', 'Uchronia – Field Recordings From Alternate Realities', 'Balani Show Super Hits - Electronic Street Parties From Mali', 'Gao Rap: Hip Hop From Northern Mali ', 'Agrim Agadez – Musique Guitare De La Republique Du Niger', 'Sahel Sounds Label Sampler'], 'Luka Productions': ['Falaw', 'Falaw', 'Fasokan', 'Mali Kady'], "Etran De L'Aïr": ['No. 1'], 'Mdou Moctar': ['Unreleased Recordings 2007-2013', 'Afelan', 'Anar', 'Afelan', 'Ilana: The Creator', 'Anar'], 'Mamman Sani Abdoulaye*': ['Unreleased Tapes 1981-1984'], 'Les Filles De Illighadad': ['Eghass Malan', 'Fatou Seidi Ghali & Alamnou Akrouni '], 'Tisdass': ['Yamedan'], "Azna De L'Ader": ['Zabaya'], 'Troupe Ecole Tudu': ['Oyiwane'], 'Abba Gargando': ['Abba Gargando'], 'Abdallah Ag Oumbadougou': ['Anou Malane', 'Anou Malane'], 'Mammane Sani*': ['La Musique Électronique Du Niger', 'La Musique Électronique Du Niger', 'La Musique Électronique Du Niger'], 'Supreme Talent Show': ['Danbe', 'Danbe'], 'Ahmoudou Madassane': ['Zerzura'], 'Mammane Sanni Abdoulaye': ['Mamman Sani Abdoulaye – Vol. No. 1'], 'Tallawit Timbouctou': ['Hali Diallo'], 'El Wali': ['Long Live The Sahrawi Army'], 'Les Filles de Illighadad': ['Fatou Seidi Ghali & Alamnou Akrouni'], 'Amanar': ['Alghafait'], 'Mdou Moctar / Brainstorm (33)': ['Anar / Vanessa'], "L'Orchestre National de Mauritanie*": ['La Mone / Kamlat'], "Afous D'Afous": ['Tarhanine Tegla'], 'Pheno S.': ['Kani']}
 
 
 @app.route("/", methods=['GET', 'POST'])
