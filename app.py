@@ -12,7 +12,7 @@ from config import REDIRECT_URI
 
 """Import musicbrainz"""
 from musicbrainz import label_search
-catalog = label_search('Warp Records')
+catalog = label_search('Warp')
 
 """Initialize the app."""
 app = Flask(__name__, instance_relative_config=True)
@@ -75,29 +75,32 @@ def playlist():
         list = []
         for album in albums:
             """Set variables."""
-            url = f"https://api.spotify.com/v1/search?q=album:{album} artist:{artist}&type=album"
+            url = f"https://api.spotify.com/v1/search?q=album:'{album}' artist:'{artist}'&type=album"
             headers = {
                         'Authorization': f'Bearer {token}'
                         }
 
             """Get response from API, transform to json."""
             response = requests.request("GET", url, headers=headers)
-            albums_by_artist = response.json()
 
-            album_data = {}
+            if response.status_code == 200:
+                albums_by_artist = response.json()
 
+                album_data = {}
 
-            """Parse the result."""
-            for albumjson in albums_by_artist['albums']['items']:
-                images = []
-                for entry in albumjson['artists']:
-                    artist_id = entry['id']
-                album_name = albumjson['name']
-                for entry in albumjson['images']:
-                    if entry['height'] == 300:
-                        album_data[album_name] = entry['url']
-                list.append(album_data)
-            artist_data[artist] = list
+                """Parse the result."""
+                for albumjson in albums_by_artist['albums']['items']:
+                    images = []
+                    for entry in albumjson['artists']:
+                        artist_id = entry['id']
+                    album_name = albumjson['name']
+                    for entry in albumjson['images']:
+                        if entry['height'] == 300:
+                            album_data[album_name] = entry['url']
+                    list.append(album_data)
+                artist_data[artist] = list
+            else:
+                pass
 
     return render_template('playlist.html', token=token, artist_data=artist_data)
 

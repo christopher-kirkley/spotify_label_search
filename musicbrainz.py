@@ -16,7 +16,9 @@ def label_search(label_name):
     response = requests.request("GET", url, headers=headers)
     data = response.json()
     for item in data['labels']:
+        """Return only the first result."""
         label_id = item['id']
+        break
 
     """Lookup label releases by MBID of the label."""
     url = f"https://musicbrainz.org/ws/2/release?label={label_id}&fmt=json&limit=200&inc=artist-credits"
@@ -35,10 +37,14 @@ def label_search(label_name):
                 catalog[artist] = []
                 catalog[artist].append(title)
             else:
-                catalog[artist].append(title)
+                if title not in catalog[artist]:
+                    catalog[artist].append(title)
+                else:
+                    pass
+
+    """Maybe best to find tracks by artists, put into dictionary, then search in spotify, return in dict"""
 
     return catalog
-
 
 
 
